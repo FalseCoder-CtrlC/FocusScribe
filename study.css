@@ -1,0 +1,477 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+
+:root {
+    --primary: #4f46e5;
+    --primary-dark: #3730a3;
+    --background: #f6f7fc;
+    --surface: #ffffff;
+    --text: #20213a;
+    --muted: #777991;
+    --border: #e8e8f2;
+    --success: #16a34a;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+    background: var(--background);
+    color: var(--text);
+    min-height: 100vh;
+}
+
+button,
+a {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.study-container {
+    width: 100%;
+    max-width: 1250px;
+    margin: auto;
+    padding: 24px;
+}
+
+.study-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+}
+
+.back-button {
+    text-decoration: none;
+    color: var(--primary);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.brand {
+    font-size: 21px;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.brand i {
+    margin-right: 7px;
+}
+
+.mode-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    background: #e9e7ff;
+    color: var(--primary-dark);
+    padding: 9px 12px;
+    border-radius: 20px;
+}
+
+.study-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    gap: 24px;
+    align-items: stretch;
+}
+
+.timer-panel,
+.review-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 28px;
+    box-shadow: 0 8px 30px rgba(37, 37, 80, 0.04);
+}
+
+.timer-panel {
+    text-align: center;
+}
+
+.eyebrow {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1.4px;
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+.timer-panel h1 {
+    font-size: 25px;
+    margin-bottom: 22px;
+}
+
+.session-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    background: #f4f4fa;
+    padding: 6px;
+    border-radius: 12px;
+}
+
+.session-tab {
+    flex: 1;
+    min-width: 75px;
+    padding: 10px 8px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.session-tab.active {
+    color: white;
+    background: var(--primary);
+}
+
+.timer-circle {
+    --progress: 0deg;
+    width: min(260px, 72vw);
+    aspect-ratio: 1;
+    margin: 28px auto;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background:
+        conic-gradient(
+            var(--primary) var(--progress),
+            #e9e8fa var(--progress)
+        );
+    transition: background 0.2s;
+}
+
+.timer-inner {
+    width: 88%;
+    height: 88%;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+#timerDisplay {
+    font-size: clamp(42px, 6vw, 58px);
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -2px;
+}
+
+#timerStatus {
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.timer-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+}
+
+.start-btn {
+    border: 0;
+    border-radius: 12px;
+    padding: 14px 24px;
+    background: var(--primary);
+    color: white;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background 0.2s;
+}
+
+.start-btn:hover {
+    background: var(--primary-dark);
+}
+
+.secondary-btn {
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: white;
+    color: var(--text);
+}
+
+.timer-hint {
+    margin: 20px 0;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--muted);
+}
+
+.progress-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 22px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.progress-info div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.progress-info span {
+    font-size: 10px;
+    color: var(--muted);
+}
+
+.progress-info strong {
+    font-size: 20px;
+    color: var(--primary);
+}
+
+.review-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.review-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.review-heading h2 {
+    font-size: 22px;
+}
+
+.review-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: var(--primary);
+    background: #eeedff;
+    font-size: 20px;
+}
+
+.note-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 24px 0;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+}
+
+.nav-note-btn {
+    border: 0;
+    background: transparent;
+    color: var(--primary);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 8px 0;
+}
+
+.nav-note-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+#notePosition {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+}
+
+.review-note {
+    padding: 4px 0 20px;
+}
+
+.review-tag {
+    display: inline-block;
+    padding: 7px 11px;
+    border-radius: 20px;
+    background: #eeedff;
+    color: var(--primary);
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 16px;
+}
+
+.review-note h2 {
+    font-size: 24px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.note-date {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 10px;
+}
+
+.review-content {
+    margin-top: 24px;
+    line-height: 1.9;
+    font-size: 14px;
+    color: #50516b;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+.review-tip {
+    margin-top: auto;
+    padding: 16px;
+    border-radius: 12px;
+    background: #f2f1ff;
+    color: #4e4a89;
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.review-tip i {
+    margin-right: 5px;
+}
+
+.study-footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 28px;
+    padding: 10px;
+}
+
+.session-modal[hidden] {
+    display: none !important;
+}
+
+.session-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    padding: 20px;
+    background: rgba(25, 25, 50, 0.55);
+    display: grid;
+    place-items: center;
+}
+
+.session-modal-card {
+    background: white;
+    width: 100%;
+    max-width: 380px;
+    padding: 32px 24px;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.completion-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #dcfce7;
+    color: var(--success);
+    font-size: 25px;
+}
+
+.session-modal-card h2 {
+    font-size: 22px;
+    margin-bottom: 12px;
+}
+
+.session-modal-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 800px) {
+    .study-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .study-container {
+        padding: 16px;
+    }
+
+    .timer-panel,
+    .review-panel {
+        padding: 22px;
+    }
+
+    .study-header {
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 420px) {
+    .study-header {
+        gap: 12px;
+    }
+
+    .brand {
+        font-size: 17px;
+    }
+
+    .mode-label {
+        font-size: 9px;
+    }
+
+    .timer-panel,
+    .review-panel {
+        padding: 18px;
+        border-radius: 16px;
+    }
+
+    .timer-panel h1 {
+        font-size: 22px;
+    }
+
+    .session-tab {
+        font-size: 10px;
+    }
+
+    .start-btn {
+        padding: 13px 16px;
+        font-size: 12px;
+    }
+
+    .timer-controls {
+        gap: 8px;
+    }
+
+    .secondary-btn {
+        width: 40px;
+        height: 42px;
+    }
+
+    .review-heading h2 {
+        font-size: 19px;
+    }
+
+    .review-note h2 {
+        font-size: 21px;
+    }
+}
