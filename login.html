@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#4f46e5">
+  <title>Login - FocusScribe</title>
+  <link rel="stylesheet" href="login.css">
+</head>
+<body>
+  <main class="auth-container">
+    <a href="index.html" class="back-link">← Back to FocusScribe</a>
+
+    <section class="auth-card">
+      <div class="brand-icon">📘</div>
+      <h1>FocusScribe</h1>
+      <p class="subtitle">Your notes. Your focus. Your progress.</p>
+
+      <div class="auth-tabs">
+        <button type="button" id="loginTab" class="active">Log In</button>
+        <button type="button" id="signupTab">Create Account</button>
+      </div>
+
+      <form id="authForm">
+        <label for="email">Email Address</label>
+        <input id="email" type="email" placeholder="you@example.com"
+          autocomplete="email" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password"
+          placeholder="Enter your password"
+          autocomplete="current-password" minlength="6" required>
+
+        <div id="confirmGroup" hidden>
+          <label for="confirmPassword">Confirm Password</label>
+          <input id="confirmPassword" type="password"
+            placeholder="Re-enter your password"
+            autocomplete="new-password" minlength="6">
+        </div>
+
+        <p id="message" role="status" aria-live="polite"></p>
+
+        <button type="submit" id="submitBtn" class="submit-btn">
+          Log In
+        </button>
+      </form>
+
+      <p class="privacy-note">
+        Your account is protected by Firebase Authentication.
+      </p>
+    </section>
+  </main>
+
+  <script type="module" src="login.js"></script>
+</body>
+</html>
