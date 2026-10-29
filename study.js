@@ -1,5 +1,10 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const notes = JSON.parse(localStorage.getItem("notes") || "[]");
+    const userId = localStorage.getItem("focusScribeCurrentUserId");
+    const notesKey = userId ? "focusScribeNotes_" + userId : null;
+
+    const notes = JSON.parse(
+        notesKey ? localStorage.getItem(notesKey) || "[]" : "[]"
+    );
 
     const selectedId = localStorage.getItem("selectedStudyNoteId");
 
