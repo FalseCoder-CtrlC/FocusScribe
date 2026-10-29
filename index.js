@@ -1,368 +1,354 @@
-const API_URL = "http://localhost:5000/api";
+
+import { auth, db } from "./firebase.js";
+
+import {
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 
 document.addEventListener("DOMContentLoaded", function () {
-const notesContainer = document.getElementById("notesContainer");
-const addNoteBtn = document.getElementById("addNoteBtn");
-const addNoteModal = document.getElementById("addNoteModal");
-const closeModalBtn = document.getElementById("closeModalBtn");
-const noteForm = document.getElementById("noteForm");
-const searchInput = document.getElementById("searchInput");
-const filterSelect = document.getElementById("filterSelect");
-const emptyState = document.getElementById("emptyState");
-const confirmModal = document.getElementById("confirmModal");
-const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
-const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
+  const notesContainer = document.getElementById("notesContainer");
+  const addNoteBtn = document.getElementById("addNoteBtn");
+  const addNoteModal = document.getElementById("addNoteModal");
+  const closeModalBtn = document.getElementById("closeModalBtn");
+  const noteForm = document.getElementById("noteForm");
+  const searchInput = document.getElementById("searchInput");
+  const filterSelect = document.getElementById("filterSelect");
+  const emptyState = document.getElementById("emptyState");
+  const confirmModal = document.getElementById("confirmModal");
+  const cancelDeleteBtn = document.getElementById("cancelDeleteBtn");
+  const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 
- let notes = JSON.parse(localStorage.getItem("notes")) || [];
+  let notes = [];
+  let currentUser = null;
+  let noteToDeleteId = null;
+  let noteToEditId = null;
+  let isSaving = false;
 
-// Give existing notes a permanent ID for Study Mode.
-let notesChanged = false;
+  // Keep the old "notes" localStorage data untouched.
+  // New notes use a separate, account-specific cache.
+  function cacheKey() {
+    return `focusScribeNotes_${currentUser.uid}`;
+  }
 
-notes.forEach((note) => {
-    if (!note.id) {
-        note.id = Date.now().toString() +
-            Math.random().toString(36).slice(2, 8);
+  function getNotesCollection() {
+    return collection(db, "users", currentUser.uid, "notes");
+  }
 
-        notesChanged = true;
-    }
-});
+  function showError(error) {
+    console.error(error);
+    alert("Something went wrong while saving or loading your notes. Please check your internet connection and try again.");
+  }
 
-if (notesChanged) {
-    localStorage.setItem("notes", JSON.stringify(notes));
-}
+  function escapeHTML(value) {
+    const div = document.createElement("div");
+    div.textContent = String(value ?? "");
+    return div.innerHTML;
+  }
 
-let noteToDeleteId = null;
-let noteToEditId = null;
+  function getTagClass(tag) {
+    return {
+      work: "tag-work",
+      personal: "tag-personal",
+      ideas: "tag-ideas",
+      reminders: "tag-reminders"
+    }[tag] || "";
+  }
 
-renderNotes();
-updateEmptyState();
+  function getTagIcon(tag) {
+    return {
+      work: '<i class="fas fa-briefcase"></i>',
+      personal: '<i class="fas fa-user"></i>',
+      ideas: '<i class="fas fa-lightbulb"></i>',
+      reminders: '<i class="fas fa-bell"></i>'
+    }[tag] || "";
+  }
 
-addNoteBtn.addEventListener("click", openAddNoteModal);
-closeModalBtn.addEventListener("click", closeAddNoteModal);
-noteForm.addEventListener("submit", handleNoteSubmit);
-searchInput.addEventListener("input", filterNotes);
-filterSelect.addEventListener("change", filterNotes);
-cancelDeleteBtn.addEventListener("click", closeConfirmModal);
-confirmDeleteBtn.addEventListener("click", confirmDeleteNote);
+  function getTagName(tag) {
+    return {
+      work: "Work",
+      personal: "Personal",
+      ideas: "Ideas",
+      reminders: "Reminders"
+    }[tag] || tag;
+  }
 
-// Render notes
-function renderNotes(notesToRender = notes) {
+  function formatDate(dateString) {
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) return "";
+
+    return date.toLocaleDateString("en-US", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function renderNotes(notesToRender = notes) {
     notesContainer.innerHTML = "";
 
     notesToRender.forEach((note) => {
-        const noteElement = document.createElement("div");
+      const noteElement = document.createElement("div");
+      noteElement.className = "note-card fade-in";
 
-        noteElement.className = "note-card fade-in";
-
-        noteElement.innerHTML = `
-            <div class="note-content">
-                <div class="note-header">
-                    <h3 class="note-title">${escapeHTML(note.title)}</h3>
-
-                    <div class="note-actions">
-                 <button
-                 type="button"
-                 class="study-btn"
-                 data-study-id="${note.id}"
-                 title="Study this note"
-                >
-                <i class="fas fa-book-open"></i>
-                Study
-                </button>
-
-                <button
-                class="edit-btn"
-                data-id="${note.id}"
-                title="Edit note"
-                >
+      noteElement.innerHTML = `
+        <div class="note-content">
+          <div class="note-header">
+            <h3 class="note-title">${escapeHTML(note.title)}</h3>
+            <div class="note-actions">
+              <button type="button" class="study-btn"
+                data-study-id="${escapeHTML(note.id)}"
+                title="Study this note">
+                <i class="fas fa-book-open"></i> Study
+              </button>
+              <button type="button" class="edit-btn"
+                data-id="${escapeHTML(note.id)}" title="Edit note">
                 <i class="fas fa-edit"></i>
-                </button>
-
-                <button
-                class="delete-btn"
-                data-id="${note.id}"
-                title="Delete note"
-                >
+              </button>
+              <button type="button" class="delete-btn"
+                data-id="${escapeHTML(note.id)}" title="Delete note">
                 <i class="fas fa-trash"></i>
-                </button>
-                </div>
-                </div>
-                
-                <p class="note-text">${escapeHTML(note.content)}</p>
-
-                <div class="note-footer">
-                    <span class="note-tag ${getTagClass(note.tag)}">
-                        ${getTagIcon(note.tag)}
-                        ${getTagName(note.tag)}
-                    </span>
-
-                    <span class="note-date">
-                        ${formatDate(note.date)}
-                    </span>
-                </div>
+              </button>
             </div>
-        `;
+          </div>
+          <p class="note-text">${escapeHTML(note.content)}</p>
+          <div class="note-footer">
+            <span class="note-tag ${getTagClass(note.tag)}">
+              ${getTagIcon(note.tag)} ${escapeHTML(getTagName(note.tag))}
+            </span>
+            <span class="note-date">${escapeHTML(formatDate(note.date))}</span>
+          </div>
+        </div>
+      `;
 
-        notesContainer.appendChild(noteElement);
+      notesContainer.appendChild(noteElement);
     });
 
-    // Delete buttons
-    document.querySelectorAll(".delete-btn").forEach((btn) => {
-        btn.addEventListener("click", function () {
-            noteToDeleteId = this.getAttribute("data-id");
-            openConfirmModal();
-        });
+    notesContainer.querySelectorAll(".delete-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        noteToDeleteId = button.dataset.id;
+        openConfirmModal();
+      });
     });
 
-    // Edit buttons
-    document.querySelectorAll(".edit-btn").forEach((btn) => {
-        btn.addEventListener("click", function () {
-            const id = this.getAttribute("data-id");
-            openEditNoteModal(id);
-        });
+    notesContainer.querySelectorAll(".edit-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        openEditNoteModal(button.dataset.id);
+      });
     });
-    
-     // Study buttons
-notesContainer.querySelectorAll(".study-btn").forEach((button) => {
-    button.addEventListener("click", () => {
-        const noteId = button.getAttribute("data-study-id");
 
-        localStorage.setItem("selectedStudyNoteId", noteId);
+    notesContainer.querySelectorAll(".study-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        const note = notes.find((item) => item.id === button.dataset.studyId);
+        if (!note) return;
+
+        localStorage.setItem("focusScribeCurrentUserId", currentUser.uid);
+        localStorage.setItem(cacheKey(), JSON.stringify(notes));
+        localStorage.setItem("selectedStudyNoteId", note.id);
+
         window.location.href = "study.html";
+      });
     });
-});
+  }
 
-}
+  function updateEmptyState(notesToCheck = notes) {
+    emptyState.style.display = notesToCheck.length === 0 ? "block" : "none";
+  }
 
+  function filterNotes() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const filterValue = filterSelect.value;
 
-// Prevent HTML injection
-function escapeHTML(text) {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-}
+    const filteredNotes = notes.filter((note) => {
+      const matchesSearch =
+        String(note.title || "").toLowerCase().includes(searchTerm) ||
+        String(note.content || "").toLowerCase().includes(searchTerm);
 
-// Get tag CSS class
-function getTagClass(tag) {
-    const classes = {
-        work: "tag-work",
-        personal: "tag-personal",
-        ideas: "tag-ideas",
-        reminders: "tag-reminders",
-    };
+      const matchesTag =
+        filterValue === "all" || note.tag === filterValue;
 
-    return classes[tag] || "";
-}
-
-// Get tag icon
-function getTagIcon(tag) {
-    const icons = {
-        work: '<i class="fas fa-briefcase"></i>',
-        personal: '<i class="fas fa-user"></i>',
-        ideas: '<i class="fas fa-lightbulb"></i>',
-        reminders: '<i class="fas fa-bell"></i>',
-    };
-
-    return icons[tag] || "";
-}
-
-// Get tag name
-function getTagName(tag) {
-    const names = {
-        work: "Work",
-        personal: "Personal",
-        ideas: "Ideas",
-        reminders: "Reminders",
-    };
-
-    return names[tag] || tag;
-}
-
-// Format date
-function formatDate(dateString) {
-    const date = new Date(dateString);
-
-    return date.toLocaleDateString("en-US", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
+      return matchesSearch && matchesTag;
     });
-}
 
-// Open Add/Edit modal
-function openAddNoteModal() {
+    renderNotes(filteredNotes);
+    updateEmptyState(filteredNotes);
+  }
+
+  async function loadNotes() {
+    const snapshot = await getDocs(getNotesCollection());
+
+    notes = snapshot.docs.map((item) => ({
+      id: item.id,
+      ...item.data()
+    }));
+
+    notes.sort((a, b) =>
+      new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime()
+    );
+
+    // Separate per-user cache for Study Mode; old "notes" key is not changed.
+    localStorage.setItem(cacheKey(), JSON.stringify(notes));
+    localStorage.setItem("focusScribeCurrentUserId", currentUser.uid);
+
+    filterNotes();
+    updateEmptyState();
+  }
+
+  function openAddNoteModal() {
     noteToEditId = null;
+    noteForm.reset();
 
     document.querySelector(".modal-title").textContent = "New Note";
     document.querySelector(".submit-btn").textContent = "Save Note";
-
-    noteForm.reset();
-
-    document.querySelector(
-        'input[name="noteTag"][value="ideas"]'
-    ).checked = true;
+    document.querySelector('input[name="noteTag"][value="ideas"]').checked = true;
 
     addNoteModal.classList.add("active");
     document.body.style.overflow = "hidden";
-}
+  }
 
-// Open edit modal
-function openEditNoteModal(id) {
-    const note = notes.find((note) => note.id === id);
-
-    if (!note) {
-        return;
-    }
+  function openEditNoteModal(id) {
+    const note = notes.find((item) => item.id === id);
+    if (!note) return;
 
     noteToEditId = id;
 
     document.querySelector(".modal-title").textContent = "Edit Note";
     document.querySelector(".submit-btn").textContent = "Update Note";
-
-    document.getElementById("noteTitle").value = note.title;
-    document.getElementById("noteContent").value = note.content;
+    document.getElementById("noteTitle").value = note.title || "";
+    document.getElementById("noteContent").value = note.content || "";
 
     const tagRadio = document.querySelector(
-        `input[name="noteTag"][value="${note.tag}"]`
+      `input[name="noteTag"][value="${note.tag}"]`
     );
-
-    if (tagRadio) {
-        tagRadio.checked = true;
-    }
+    if (tagRadio) tagRadio.checked = true;
 
     addNoteModal.classList.add("active");
     document.body.style.overflow = "hidden";
-}
+  }
 
-// Close Add/Edit modal
-function closeAddNoteModal() {
+  function closeAddNoteModal() {
     addNoteModal.classList.remove("active");
     document.body.style.overflow = "auto";
-
     noteForm.reset();
     noteToEditId = null;
 
     document.querySelector(".modal-title").textContent = "New Note";
     document.querySelector(".submit-btn").textContent = "Save Note";
-}
+  }
 
-// Open delete confirmation
-function openConfirmModal() {
+  function openConfirmModal() {
     confirmModal.classList.add("active");
     document.body.style.overflow = "hidden";
-}
+  }
 
-// Close delete confirmation
-function closeConfirmModal() {
+  function closeConfirmModal() {
     confirmModal.classList.remove("active");
     document.body.style.overflow = "auto";
-
     noteToDeleteId = null;
-}
+  }
 
-// Add or update note
-function handleNoteSubmit(e) {
-    e.preventDefault();
+  async function handleNoteSubmit(event) {
+    event.preventDefault();
+    if (isSaving) return;
 
     const title = document.getElementById("noteTitle").value.trim();
     const content = document.getElementById("noteContent").value.trim();
+    const selectedTag = document.querySelector('input[name="noteTag"]:checked');
 
-    const selectedTag = document.querySelector(
-        'input[name="noteTag"]:checked'
-    );
+    if (!title || !content || !selectedTag) return;
 
-    if (!selectedTag) {
-        return;
-    }
+    const now = new Date().toISOString();
+    const submitButton = noteForm.querySelector(".submit-btn");
 
-    const tag = selectedTag.value;
+    isSaving = true;
+    if (submitButton) submitButton.disabled = true;
 
-    // Update existing note
-    if (noteToEditId !== null) {
-        const noteIndex = notes.findIndex(
-            (note) => note.id === noteToEditId
-        );
+    try {
+      if (noteToEditId !== null) {
+        const existing = notes.find((item) => item.id === noteToEditId);
+        if (!existing) return;
 
-        if (noteIndex !== -1) {
-            notes[noteIndex].title = title;
-            notes[noteIndex].content = content;
-            notes[noteIndex].tag = tag;
-            notes[noteIndex].updatedAt = new Date().toISOString();
-        }
-    }
-
-    // Add new note
-    else {
-        const newNote = {
-            id: Date.now().toString(),
-            title: title,
-            content: content,
-            tag: tag,
-            date: new Date().toISOString(),
+        const updatedNote = {
+          ...existing,
+          title,
+          content,
+          tag: selectedTag.value,
+          updatedAt: now
         };
 
-        notes.unshift(newNote);
+        await setDoc(doc(getNotesCollection(), noteToEditId), updatedNote);
+      } else {
+        const noteRef = doc(getNotesCollection());
+
+        const newNote = {
+          title,
+          content,
+          tag: selectedTag.value,
+          date: now,
+          updatedAt: now
+        };
+
+        await setDoc(noteRef, newNote);
+      }
+
+      await loadNotes();
+      closeAddNoteModal();
+    } catch (error) {
+      showError(error);
+    } finally {
+      isSaving = false;
+      if (submitButton) submitButton.disabled = false;
+    }
+  }
+
+  async function confirmDeleteNote() {
+    if (!noteToDeleteId || isSaving) return;
+
+    isSaving = true;
+    confirmDeleteBtn.disabled = true;
+
+    try {
+      await deleteDoc(doc(getNotesCollection(), noteToDeleteId));
+      await loadNotes();
+      closeConfirmModal();
+    } catch (error) {
+      showError(error);
+    } finally {
+      isSaving = false;
+      confirmDeleteBtn.disabled = false;
+    }
+  }
+
+  addNoteBtn.addEventListener("click", openAddNoteModal);
+  closeModalBtn.addEventListener("click", closeAddNoteModal);
+  noteForm.addEventListener("submit", handleNoteSubmit);
+  searchInput.addEventListener("input", filterNotes);
+  filterSelect.addEventListener("change", filterNotes);
+  cancelDeleteBtn.addEventListener("click", closeConfirmModal);
+  confirmDeleteBtn.addEventListener("click", confirmDeleteNote);
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      window.location.replace("login.html");
+      return;
     }
 
-    saveNotes();
-    closeAddNoteModal();
-    filterNotes();
-}
+    currentUser = user;
 
-// Delete note
-function confirmDeleteNote() {
-    if (noteToDeleteId !== null) {
-        notes = notes.filter(
-            (note) => note.id !== noteToDeleteId
-        );
-
-        saveNotes();
-        closeConfirmModal();
-        filterNotes();
+    try {
+      await loadNotes();
+    } catch (error) {
+      showError(error);
     }
-}
-
-// Save notes to localStorage
-function saveNotes() {
-    localStorage.setItem("notes", JSON.stringify(notes));
-}
-
-// Search and filter
-function filterNotes() {
-    const searchTerm = searchInput.value.toLowerCase().trim();
-    const filterValue = filterSelect.value;
-
-    let filteredNotes = [...notes];
-
-    // Search
-    if (searchTerm) {
-        filteredNotes = filteredNotes.filter(
-            (note) =>
-                note.title.toLowerCase().includes(searchTerm) ||
-                note.content.toLowerCase().includes(searchTerm)
-        );
-    }
-
-    // Category filter
-    if (filterValue !== "all") {
-        filteredNotes = filteredNotes.filter(
-            (note) => note.tag === filterValue
-        );
-    }
-
-    renderNotes(filteredNotes);
-    updateEmptyState(filteredNotes);
-}
-
-// Empty state
-function updateEmptyState(notesToCheck = notes) {
-    if (notesToCheck.length === 0) {
-        emptyState.style.display = "block";
-    } else {
-        emptyState.style.display = "none";
-    }
-}
-
+  });
 });
