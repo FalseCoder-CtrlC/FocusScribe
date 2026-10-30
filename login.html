@@ -1,56 +1,12 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#4f46e5">
-  <title>Login - FocusScribe</title>
-  <link rel="stylesheet" href="login.css">
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Sign in — FocusScribe</title><link rel="stylesheet" href="login.css"></head>
 <body>
-  <main class="auth-container">
-    <a href="index.html" class="back-link">← Back to FocusScribe</a>
-
-    <section class="auth-card">
-      <div class="brand-icon">📘</div>
-      <h1>FocusScribe</h1>
-      <p class="subtitle">Your notes. Your focus. Your progress.</p>
-
-      <div class="auth-tabs">
-        <button type="button" id="loginTab" class="active">Log In</button>
-        <button type="button" id="signupTab">Create Account</button>
-      </div>
-
-      <form id="authForm">
-        <label for="email">Email Address</label>
-        <input id="email" type="email" placeholder="you@example.com"
-          autocomplete="email" required>
-
-        <label for="password">Password</label>
-        <input id="password" type="password"
-          placeholder="Enter your password"
-          autocomplete="current-password" minlength="6" required>
-
-        <div id="confirmGroup" hidden>
-          <label for="confirmPassword">Confirm Password</label>
-          <input id="confirmPassword" type="password"
-            placeholder="Re-enter your password"
-            autocomplete="new-password" minlength="6">
-        </div>
-
-        <p id="message" role="status" aria-live="polite"></p>
-
-        <button type="submit" id="submitBtn" class="submit-btn">
-          Log In
-        </button>
-      </form>
-
-      <p class="privacy-note">
-        Your account is protected by Firebase Authentication.
-      </p>
-    </section>
-  </main>
-
-  <script type="module" src="login.js"></script>
-</body>
-</html>
+  <main class="auth-shell">
+    <section class="auth-aside"><a class="brand" href="login.html"><span class="brand-mark">F</span>FocusScribe</a><div class="aside-copy"><span class="eyebrow">MAKE ROOM TO THINK</span><h1>Your ideas deserve a calmer space.</h1><p>Keep your notes organized, study with intention, and share only what you choose.</p><div class="aside-decoration"><span>✦</span><span>◷</span><span>✎</span></div></div><small class="aside-foot">A little more focus, one note at a time.</small></section>
+    <section class="auth-main"><div class="auth-card"><div class="mobile-brand"><span class="brand-mark">F</span> FocusScribe</div><span class="eyebrow">WELCOME TO FOCUSSCRIBE</span><h2 id="formHeading">Welcome back</h2><p class="auth-subtitle" id="formSubtitle">Sign in to continue to your workspace.</p>
+      <div class="auth-tabs"><button class="auth-tab active" id="loginTab" type="button">Log in</button><button class="auth-tab" id="signupTab" type="button">Create account</button></div>
+      <form id="authForm"><label for="displayName" id="nameLabel" class="hidden">Display name</label><input id="displayName" class="hidden" type="text" maxlength="60" placeholder="Your name" autocomplete="name"><label for="email">Email address</label><input id="email" type="email" required placeholder="you@example.com" autocomplete="email"><label for="password">Password</label><input id="password" type="password" required minlength="6" placeholder="At least 6 characters" autocomplete="current-password"><p id="authError" class="auth-error" role="alert"></p><button class="submit-button" id="submitBtn" type="submit">Log in</button></form><p class="privacy-note">Your private notes stay private. Shared notes are visible only when you choose to share them.</p>
+    </div></section>
+  </main><script type="module" src="login.js"></script>
+</body></html>
