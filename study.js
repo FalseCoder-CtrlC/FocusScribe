@@ -1,382 +1,60 @@
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import { collection, getDocs } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+
 document.addEventListener("DOMContentLoaded", () => {
-    const userId = localStorage.getItem("focusScribeCurrentUserId");
-    const notesKey = userId ? "focusScribeNotes_" + userId : null;
-
-    const notes = JSON.parse(
-        notesKey ? localStorage.getItem(notesKey) || "[]" : "[]"
-    );
-
-    const selectedId = localStorage.getItem("selectedStudyNoteId");
-
-    // Sort is not needed: keep the same order as My Notes.
-    let currentIndex = notes.findIndex(
-        note => String(note.id) === String(selectedId)
-    );
-
-    // Handle missing or deleted notes.
-    if (currentIndex < 0 && notes.length > 0) {
-        currentIndex = 0;
+  const $ = id => document.getElementById(id);
+  let notes = [], selectedIndex = 0, duration = 25 * 60, remaining = duration, interval = null, running = false;
+  const cacheKey = () => "focusScribeNotes_" + (auth.currentUser?.uid || "");
+  function format(seconds) { return `${String(Math.floor(seconds/60)).padStart(2,"0")}:${String(seconds%60).padStart(2,"0")}`; }
+  function stopTimer() { if (interval) clearInterval(interval); interval = null; running = false; $("startBtn").textContent = "Start focus"; }
+  function renderTimer() { $("timer").textContent = format(remaining); document.title = `${format(remaining)} — Study Mode`; }
+  function renderNote() {
+    if (!notes.length) {
+      $("noteTitle").textContent = "No notes available"; $("noteContent").textContent = "Create a note in My Notes before starting a study session.";
+      $("noteCounter").textContent = "0 / 0"; $("noteSelect").innerHTML = '<option value="">No notes</option>';
+      $("prevNote").disabled = true; $("nextNote").disabled = true; return;
     }
-
-    const timerDisplay = document.getElementById("timerDisplay");
-    const timerStatus = document.getElementById("timerStatus");
-    const sessionTitle = document.getElementById("sessionTitle");
-    const startBtn = document.getElementById("startBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const skipBtn = document.getElementById("skipBtn");
-    const timerCircle = document.getElementById("timerCircle");
-
-    const noteTitle = document.getElementById("noteTitle");
-    const noteContent = document.getElementById("noteContent");
-    const noteTag = document.getElementById("noteTag");
-    const noteDate = document.getElementById("noteDate");
-    const notePosition = document.getElementById("notePosition");
-
-    const previousNoteBtn = document.getElementById("previousNoteBtn");
-    const nextNoteBtn = document.getElementById("nextNoteBtn");
-
-    const completedSessionsEl =
-        document.getElementById("completedSessions");
-
-    const totalFocusTimeEl =
-        document.getElementById("totalFocusTime");
-
-    const sessionModal = document.getElementById("sessionModal");
-    const completionTitle =
-        document.getElementById("completionTitle");
-
-    const completionMessage =
-        document.getElementById("completionMessage");
-
-    const continueBtn = document.getElementById("continueBtn");
-
-    const tabs = document.querySelectorAll(".session-tab");
-
-    const durations = {
-        focus: 25 * 60,
-        short: 5 * 60,
-        long: 15 * 60
-    };
-
-    const labels = {
-        focus: "Focus Session",
-        short: "Short Break",
-        long: "Long Break"
-    };
-
-    let mode = "focus";
-    let remaining = durations[mode];
-    let interval = null;
-    let running = false;
-    let completedSessions = 0;
-    let totalFocusSeconds = 0;
-
-    // Progress is kept locally on this device for now.
+    const note = notes[selectedIndex];
+    $("noteTitle").textContent = note.title || "Untitled note"; $("noteContent").textContent = note.content || "";
+    $("noteCounter").textContent = `${selectedIndex+1} / ${notes.length}`;
+    $("noteSelect").value = note.id;
+    $("prevNote").disabled = notes.length < 2; $("nextNote").disabled = notes.length < 2;
+  }
+  function selectNote(index) { if (!notes.length) return; selectedIndex = (index + notes.length) % notes.length; localStorage.setItem("selectedStudyNoteId", notes[selectedIndex].id); renderNote(); }
+  function setMode(minutes, label) {
+    stopTimer(); duration = minutes * 60; remaining = duration; $("timerLabel").textContent = label.toUpperCase(); $("sessionHint").textContent = label === "Focus" ? "A focused session is 25 minutes." : `Take a ${minutes}-minute ${label.toLowerCase()}.`;
+    document.querySelectorAll(".mode-tab").forEach(b => b.classList.toggle("active", Number(b.dataset.minutes) === minutes)); renderTimer();
+    $("startBtn").textContent = label === "Focus" ? "Start focus" : "Start break";
+  }
+  function startTimer() {
+    if (running) { stopTimer(); return; }
+    running = true; $("startBtn").textContent = "Pause";
+    interval = setInterval(() => {
+      remaining--; renderTimer();
+      if (remaining <= 0) { stopTimer(); remaining = 0; renderTimer(); $("timerLabel").textContent = "SESSION COMPLETE"; $("sessionHint").textContent = "Nice work. Take a breath before your next session."; $("startBtn").textContent = "Start again"; if ("Notification" in window && Notification.permission === "granted") new Notification("FocusScribe", { body: "Your timer session is complete." }); }
+    }, 1000);
+  }
+  $("startBtn").addEventListener("click", startTimer);
+  $("resetBtn").addEventListener("click", () => { stopTimer(); remaining = duration; renderTimer(); });
+  document.querySelectorAll(".mode-tab").forEach(b => b.addEventListener("click", () => setMode(Number(b.dataset.minutes), b.textContent.trim())));
+  $("prevNote").addEventListener("click", () => selectNote(selectedIndex - 1));
+  $("nextNote").addEventListener("click", () => selectNote(selectedIndex + 1));
+  $("noteSelect").addEventListener("change", () => { const i = notes.findIndex(n => n.id === $("noteSelect").value); if (i >= 0) selectNote(i); });
+  onAuthStateChanged(auth, async user => {
+    if (!user) { window.location.replace("login.html"); return; }
     try {
-        const savedProgress = JSON.parse(
-            localStorage.getItem("focusScribeStudyProgress") || "{}"
-        );
-
-        completedSessions = Number(savedProgress.completedSessions) || 0;
-        totalFocusSeconds = Number(savedProgress.totalFocusSeconds) || 0;
-    } catch (error) {
-        completedSessions = 0;
-        totalFocusSeconds = 0;
-    }
-
-    function saveProgress() {
-        localStorage.setItem(
-            "focusScribeStudyProgress",
-            JSON.stringify({
-                completedSessions,
-                totalFocusSeconds
-            })
-        );
-    }
-
-    function updateProgress() {
-        completedSessionsEl.textContent = completedSessions;
-
-        const minutes = Math.floor(totalFocusSeconds / 60);
-        totalFocusTimeEl.textContent = `${minutes} min`;
-    }
-
-    function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-
-        return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-    }
-
-    function updateTimerDisplay() {
-        timerDisplay.textContent = formatTime(remaining);
-
-        const total = durations[mode];
-        const elapsed = total - remaining;
-        const progress = total > 0 ? elapsed / total : 0;
-
-        timerCircle.style.setProperty(
-            "--progress",
-            `${progress * 360}deg`
-        );
-
-        document.title =
-            `${formatTime(remaining)} · ${labels[mode]} | FocusScribe`;
-    }
-
-    function setMode(newMode) {
-        pauseTimer();
-
-        mode = newMode;
-        remaining = durations[mode];
-
-        sessionTitle.textContent = labels[mode];
-
-        tabs.forEach(tab => {
-            tab.classList.toggle(
-                "active",
-                tab.dataset.mode === mode
-            );
-        });
-
-        timerStatus.textContent =
-            mode === "focus" ? "Ready to focus" : "Time to relax";
-
-        startBtn.innerHTML = mode === "focus"
-            ? '<i class="fas fa-play"></i> Start Focus'
-            : '<i class="fas fa-play"></i> Start Break';
-
-        updateTimerDisplay();
-    }
-
-    function startTimer() {
-        if (running) {
-            pauseTimer();
-            return;
-        }
-
-        if (remaining <= 0) {
-            remaining = durations[mode];
-        }
-
-        running = true;
-        timerStatus.textContent = "Session in progress";
-
-        startBtn.innerHTML =
-            '<i class="fas fa-pause"></i> Pause';
-
-        interval = setInterval(() => {
-            if (remaining > 0) {
-                remaining--;
-
-                if (mode === "focus") {
-                    totalFocusSeconds++;
-                }
-
-                updateTimerDisplay();
-                updateProgress();
-
-                // Save progress occasionally during a focus session.
-                if (mode === "focus" && remaining % 10 === 0) {
-                    saveProgress();
-                }
-            }
-
-            if (remaining <= 0) {
-                completeSession();
-            }
-        }, 1000);
-    }
-
-    function pauseTimer() {
-        if (interval !== null) {
-            clearInterval(interval);
-            interval = null;
-        }
-
-        running = false;
-
-        if (startBtn) {
-            startBtn.innerHTML = mode === "focus"
-                ? '<i class="fas fa-play"></i> Resume Focus'
-                : '<i class="fas fa-play"></i> Resume Break';
-        }
-
-        if (timerStatus && remaining > 0) {
-            timerStatus.textContent = "Paused";
-        }
-
-        saveProgress();
-    }
-
-    function resetTimer() {
-        pauseTimer();
-        remaining = durations[mode];
-
-        timerStatus.textContent = "Timer reset";
-
-        updateTimerDisplay();
-    }
-
-    function completeSession() {
-        pauseTimer();
-        remaining = 0;
-
-        if (mode === "focus") {
-            completedSessions++;
-            saveProgress();
-        }
-
-        updateProgress();
-        updateTimerDisplay();
-
-        if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("FocusScribe", {
-                body: mode === "focus"
-                    ? "Focus session complete! Time for a break."
-                    : "Break complete! Ready for another session?"
-            });
-        }
-
-        if (mode === "focus") {
-            completionTitle.textContent = "Focus session complete!";
-            completionMessage.textContent =
-                "Great work! Take a break before your next focus session.";
-        } else {
-            completionTitle.textContent = "Break finished!";
-            completionMessage.textContent =
-                "You're refreshed. Continue studying when you're ready.";
-        }
-
-        continueBtn.textContent = mode === "focus"
-            ? "Start Short Break"
-            : "Return to Focus";
-
-        sessionModal.hidden = false;
-        timerStatus.textContent = "Session complete";
-    }
-
-    function showNote() {
-        const note = notes[currentIndex];
-
-        if (!note) {
-            noteTitle.textContent = "No notes available";
-            noteContent.textContent =
-                "Return to My Notes and create a note to begin studying.";
-
-            noteTag.textContent = "No category";
-            noteDate.textContent = "";
-
-            notePosition.textContent = "No notes";
-            previousNoteBtn.disabled = true;
-            nextNoteBtn.disabled = true;
-
-            return;
-        }
-
-        noteTitle.textContent = note.title || "Untitled Note";
-        noteContent.textContent = note.content || "";
-        noteTag.textContent = getTagName(note.tag);
-
-        const dateValue = note.updatedAt || note.date || note.createdAt;
-
-        if (dateValue) {
-            const date = new Date(dateValue);
-
-            noteDate.textContent = isNaN(date.getTime())
-                ? ""
-                : `Last saved: ${date.toLocaleDateString()}`;
-        } else {
-            noteDate.textContent = "";
-        }
-
-        notePosition.textContent =
-            `Note ${currentIndex + 1} of ${notes.length}`;
-
-        previousNoteBtn.disabled = currentIndex <= 0;
-        nextNoteBtn.disabled = currentIndex >= notes.length - 1;
-    }
-
-    function getTagName(tag) {
-        const names = {
-            work: "Work",
-            personal: "Personal",
-            ideas: "Ideas",
-            reminders: "Reminder"
-        };
-
-        return names[tag] || "Note";
-    }
-
-    function showNextSession() {
-        sessionModal.hidden = true;
-
-        if (mode === "focus") {
-            const nextMode = completedSessions % 4 === 0
-                ? "long"
-                : "short";
-
-            setMode(nextMode);
-        } else {
-            setMode("focus");
-        }
-    }
-
-    tabs.forEach(tab => {
-        tab.addEventListener("click", () => {
-            setMode(tab.dataset.mode);
-        });
-    });
-
-    startBtn.addEventListener("click", startTimer);
-    resetBtn.addEventListener("click", resetTimer);
-
-    skipBtn.addEventListener("click", () => {
-        pauseTimer();
-        remaining = 0;
-        completeSession();
-    });
-
-    previousNoteBtn.addEventListener("click", () => {
-        if (currentIndex > 0) {
-            currentIndex--;
-            localStorage.setItem(
-                "selectedStudyNoteId",
-                notes[currentIndex].id
-            );
-            showNote();
-        }
-    });
-
-    nextNoteBtn.addEventListener("click", () => {
-        if (currentIndex < notes.length - 1) {
-            currentIndex++;
-            localStorage.setItem(
-                "selectedStudyNoteId",
-                notes[currentIndex].id
-            );
-            showNote();
-        }
-    });
-
-    continueBtn.addEventListener("click", showNextSession);
-
-    // Ask permission only after the student interacts with the timer.
-    startBtn.addEventListener("click", () => {
-        if (
-            "Notification" in window &&
-            Notification.permission === "default"
-        ) {
-            Notification.requestPermission();
-        }
-    });
-
-    window.addEventListener("beforeunload", () => {
-        pauseTimer();
-        saveProgress();
-    });
-
-    showNote();
-    updateProgress();
-    updateTimerDisplay();
+      const snap = await getDocs(collection(db, "users", user.uid, "notes"));
+      notes = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      notes.sort((a,b) => new Date(b.updatedAt || b.createdAt || 0) - new Date(a.updatedAt || a.createdAt || 0));
+      // Refresh the account-specific cache for older browser sessions; never read the legacy "notes" key.
+      localStorage.setItem("focusScribeCurrentUserId", user.uid);
+      localStorage.setItem(cacheKey(), JSON.stringify(notes));
+      $("noteSelect").innerHTML = notes.map(n => `<option value="${String(n.id).replace(/"/g,"&quot;")}">${String(n.title || "Untitled note").replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}</option>`).join("") || '<option value="">No notes</option>';
+      const selectedId = localStorage.getItem("selectedStudyNoteId");
+      const idx = notes.findIndex(n => n.id === selectedId);
+      selectedIndex = idx >= 0 ? idx : 0;
+      renderNote(); renderTimer();
+    } catch (e) { console.error(e); $("noteTitle").textContent = "Unable to load notes"; $("noteContent").textContent = "Check your Firebase configuration and Firestore rules, then reload this page."; }
+  });
 });
