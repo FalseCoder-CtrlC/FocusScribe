@@ -1,85 +1,64 @@
-import { auth } from "./firebase.js";
+import { auth, db } from "./firebase.js";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-
-const authForm = document.getElementById("authForm");
-const loginTab = document.getElementById("loginTab");
-const signupTab = document.getElementById("signupTab");
-const confirmGroup = document.getElementById("confirmGroup");
-const confirmPassword = document.getElementById("confirmPassword");
-const submitBtn = document.getElementById("submitBtn");
-const message = document.getElementById("message");
-
-let isSignup = false;
-
-function showMessage(text, type = "error") {
-  message.textContent = text;
-  message.className = type;
+const $ = id => document.getElementById(id);
+let mode = "login";
+let submitting = false;
+function setMode(next) {
+  mode = next;
+  const signup = mode === "signup";
+  $("loginTab").classList.toggle("active", !signup);
+  $("signupTab").classList.toggle("active", signup);
+  $("displayName").classList.toggle("hidden", !signup);
+  $("nameLabel").classList.toggle("hidden", !signup);
+  $("displayName").required = signup;
+  $("formHeading").textContent = signup ? "Create your account" : "Welcome back";
+  $("formSubtitle").textContent = signup ? "Start a fresh, focused workspace." : "Sign in to continue to your workspace.";
+  $("submitBtn").textContent = signup ? "Create account" : "Log in";
+  $("password").autocomplete = signup ? "new-password" : "current-password";
+  $("authError").textContent = "";
 }
+$("loginTab").addEventListener("click", () => setMode("login"));
+$("signupTab").addEventListener("click", () => setMode("signup"));
 
-function setMode(signup) {
-  isSignup = signup;
-
-  loginTab.classList.toggle("active", !signup);
-  signupTab.classList.toggle("active", signup);
-
-  confirmGroup.hidden = !signup;
-  confirmPassword.required = signup;
-  document.getElementById("password").autocomplete =
-    signup ? "new-password" : "current-password";
-
-  submitBtn.textContent = signup ? "Create Account" : "Log In";
-  showMessage("");
-}
-
-loginTab.addEventListener("click", () => setMode(false));
-signupTab.addEventListener("click", () => setMode(true));
-
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    window.location.replace("index.html");
-  }
+onAuthStateChanged(auth, user => {
+  // Avoid racing the signup profile write; redirect existing sessions only when the form is idle.
+  if (user && !submitting) window.location.replace("index.html");
 });
 
-authForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value;
-  const confirmation = confirmPassword.value;
-
-  if (isSignup && password !== confirmation) {
-    showMessage("Passwords do not match.");
-    return;
-  }
-
-  submitBtn.disabled = true;
-  showMessage(isSignup ? "Creating your account..." : "Logging in...", "success");
-
+$("authForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const button = $("submitBtn");
+  submitting = true;
+  button.disabled = true;
+  button.textContent = mode === "signup" ? "Creating account…" : "Signing in…";
+  $("authError").textContent = "";
+  const email = $("email").value.trim();
+  const password = $("password").value;
+  const displayName = $("displayName").value.trim();
   try {
-    if (isSignup) {
-      await createUserWithEmailAndPassword(auth, email, password);
+    if (mode === "signup") {
+      if (!displayName) throw new Error("Please enter a display name.");
+      const credential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(credential.user, { displayName });
+      await setDoc(doc(db, "users", credential.user.uid), { displayName, createdAt: serverTimestamp() });
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
-
-    showMessage("Success! Opening FocusScribe...", "success");
     window.location.replace("index.html");
-  } catch (error) {
+  } catch (err) {
     const messages = {
-      "auth/email-already-in-use": "This email already has an account. Please log in.",
-      "auth/invalid-email": "Please enter a valid email address.",
-      "auth/weak-password": "Choose a stronger password with at least 6 characters.",
-      "auth/invalid-credential": "Incorrect email or password. Please try again.",
-      "auth/network-request-failed": "Network error. Check your internet connection.",
-      "auth/too-many-requests": "Too many attempts. Please try again later."
+      "auth/email-already-in-use": "An account with this email already exists. Try logging in.",
+      "auth/invalid-email": "Enter a valid email address.",
+      "auth/weak-password": "Use a password with at least 6 characters.",
+      "auth/invalid-credential": "Email or password is incorrect.",
+      "auth/too-many-requests": "Too many attempts. Please wait and try again."
     };
-
-    showMessage(messages[error.code] || `Unable to continue: ${error.message}`);
-    submitBtn.disabled = false;
+    $("authError").textContent = messages[err.code] || err.message || "Authentication failed.";
+  } finally {
+    submitting = false;
+    button.disabled = false;
+    button.textContent = mode === "signup" ? "Create account" : "Log in";
   }
 });
