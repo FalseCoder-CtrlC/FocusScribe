@@ -1,7 +1,6 @@
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
-import { getAuth } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD3VOG3B2NxvsjJ0zjqEwpb_gr6MwGIds8",
@@ -9,7 +8,8 @@ const firebaseConfig = {
   projectId: "focusscribe",
   storageBucket: "focusscribe.firebasestorage.app",
   messagingSenderId: "670658048904",
-  appId: "1:670658048904:web:a2a2ec57b3035426ab003d"
+  appId: "1:670658048904:web:a2a2ec57b3035426ab003d",
+  measurementId: "G-YLVK4PBNY9"
 };
 
 const app = initializeApp(firebaseConfig);
