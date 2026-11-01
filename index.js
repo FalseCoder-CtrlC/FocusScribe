@@ -354,14 +354,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const term = $("searchInput").value.trim().toLowerCase();
     const tag = $("filterSelect").value;
 
-    const filtered = myNotes.filter(n =>
+    const filtered = myNotes.filter(n => {
 
-      (tag === "all" || n.tag === tag) &&
+  const matchesCategory =
+    tag === "all" ||
+    (tag === "favorites"
+      ? n.isFavorite === true
+      : n.tag === tag);
 
-      (`${n.title || ""} ${n.content || ""}`
-        .toLowerCase().includes(term))
+  const matchesSearch =
+    `${n.title || ""} ${n.content || ""}`
+      .toLowerCase()
+      .includes(term);
 
-    );
+  return matchesCategory && matchesSearch;
+
+});
 
     notesContainer.innerHTML =
       filtered.map(n => noteCard(n, true)).join("");
@@ -474,12 +482,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const old = myNotes.find(n => n.id === editingId);
 
         await setDoc(
-          doc(notesRef(currentUser.uid), editingId),
-          {
-            ...payload,
-            createdAt: old?.createdAt || now
-          }
-        );
+  doc(notesRef(currentUser.uid), editingId),
+  {
+    ...payload,
+    createdAt: old?.createdAt || now,
+    isFavorite: Boolean(old?.isFavorite),
+    isPinned: Boolean(old?.isPinned)
+  }
+);
 
       } else {
 
@@ -528,7 +538,39 @@ document.addEventListener("DOMContentLoaded", () => {
     const note = myNotes.find(n => n.id === button.dataset.id);
 
     if (!note) return;
+    if (button.dataset.action === "favorite") {
 
+  try {
+
+    const newFavoriteStatus = !note.isFavorite;
+
+    await updateDoc(
+      doc(notesRef(currentUser.uid), note.id),
+      {
+        isFavorite: newFavoriteStatus
+      }
+    );
+
+    note.isFavorite = newFavoriteStatus;
+
+    cacheMyNotes();
+    renderMyNotes();
+
+    toast(
+      newFavoriteStatus
+        ? "Added to favorites."
+        : "Removed from favorites."
+    );
+
+  } catch (err) {
+
+    console.error(err);
+    toast("Couldn't update favorite status.");
+
+  }
+
+  return;
+}
     if (button.dataset.action === "edit") {
 
       openNoteModal(note);
