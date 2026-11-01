@@ -3,6 +3,19 @@
 @media(max-width:1200px){.user-grid,.notes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.main-area{padding-left:27px;padding-right:27px}}
 @media(max-width:760px){.drawer{transform:translateX(-105%);box-shadow:none}.drawer.open{transform:translateX(0);box-shadow:15px 0 50px #171c2b20}.drawer-overlay.show{display:block;position:fixed;z-index:30;inset:0;background:#161b2b70;backdrop-filter:blur(2px)}.main-area{margin-left:0;padding:0 18px 35px}.topbar{height:75px;justify-content:flex-start}.menu-button{display:grid!important}.topbar-title{flex:1}.topbar-title h1{font-size:19px}.topbar-actions{margin-left:auto}.welcome-row{align-items:flex-start;flex-direction:column;padding-top:25px;gap:15px}.welcome-row h2{font-size:23px}.welcome-row p{font-size:12px}.welcome-row .primary-button{align-self:stretch}.pill{font-size:10px}.user-grid,.notes-grid{grid-template-columns:1fr}.user-card{padding:15px}.toolbar{flex-wrap:wrap}.search-box{flex-basis:100%;max-width:none}.toolbar select{flex:1}.result-count{margin-left:0}.notes-toolbar .result-count{margin-left:auto}.profile-heading{padding-top:8px}.modal-card{padding:20px}.modal-actions>*{flex:1}.note-card{min-height:180px}}
 @media(min-width:761px) and (max-width:980px){.drawer{width:225px}.main-area{margin-left:225px;padding-left:22px;padding-right:22px}.user-grid,.notes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* FAVORITE NOTES */
+
+button[data-action="favorite"] {
+  color: #c58a27;
+  border-color: #f0dfbd;
+  background: #fffaf0;
+}
+
+button[data-action="favorite"]:hover {
+  background: #fff2d8;
+}
+
 /* =====================================
    SHARED NOTE FULL VIEW
 ===================================== */
@@ -73,16 +86,4 @@
     max-height: 60vh;
     padding: 14px;
   }
-}
-
-/* FAVORITE NOTES */
-
-button[data-action="favorite"] {
-  color: #c58a27;
-  border-color: #f0dfbd;
-  background: #fffaf0;
-}
-
-button[data-action="favorite"]:hover {
-  background: #fff2d8;
 }
