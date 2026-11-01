@@ -291,18 +291,24 @@ document.addEventListener("DOMContentLoaded", () => {
       : "";
 
     const actions = ownerMode ? `
-      <button class="mini-button"
-        data-action="study"
-        data-id="${escapeHtml(note.id)}">Study</button>
+  <button class="mini-button favorite-button"
+    data-action="favorite"
+    data-id="${escapeHtml(note.id)}">
+    ${note.isFavorite ? "★ Favorited" : "☆ Favorite"}
+  </button>
 
-      <button class="mini-button"
-        data-action="edit"
-        data-id="${escapeHtml(note.id)}">Edit</button>
+  <button class="mini-button"
+    data-action="study"
+    data-id="${escapeHtml(note.id)}">Study</button>
 
-      <button class="mini-button danger"
-        data-action="delete"
-        data-id="${escapeHtml(note.id)}">Delete</button>
-    ` : "";
+  <button class="mini-button"
+    data-action="edit"
+    data-id="${escapeHtml(note.id)}">Edit</button>
+
+  <button class="mini-button danger"
+    data-action="delete"
+    data-id="${escapeHtml(note.id)}">Delete</button>
+` : "";
 
     return `
       <article class="note-card ${ownerMode ? "" : "shared-note-card"}"
