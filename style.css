@@ -74,3 +74,15 @@
     padding: 14px;
   }
 }
+
+/* FAVORITE NOTES */
+
+button[data-action="favorite"] {
+  color: #c58a27;
+  border-color: #f0dfbd;
+  background: #fffaf0;
+}
+
+button[data-action="favorite"]:hover {
+  background: #fff2d8;
+}
