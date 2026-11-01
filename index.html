@@ -9,63 +9,268 @@
 </head>
 <body>
   <div class="app-shell">
+
     <aside class="drawer" id="drawer" aria-label="Main navigation">
-      <a class="brand" href="index.html"><span class="brand-mark">F</span><span>FocusScribe</span></a>
+      <a class="brand" href="index.html">
+        <span class="brand-mark">F</span>
+        <span>FocusScribe</span>
+      </a>
+
       <div class="drawer-label">WORKSPACE</div>
+
       <nav class="nav-list">
-        <button class="nav-item active" data-view="directory"><span>▦</span> User directory</button>
-        <button class="nav-item" data-view="my-notes"><span>▤</span> My notes</button>
-        <a class="nav-item" href="study.html"><span>◷</span> Study mode</a>
+        <button class="nav-item active" data-view="directory">
+          <span>▦</span> User directory
+        </button>
+        <button class="nav-item" data-view="my-notes">
+          <span>▤</span> My notes
+        </button>
+        <a class="nav-item" href="study.html">
+          <span>◷</span> Study mode
+        </a>
       </nav>
+
       <div class="drawer-spacer"></div>
-      <div class="drawer-user"><div class="avatar" id="currentAvatar">U</div><div class="user-meta"><strong id="currentUserName">Your account</strong><small id="currentUserEmail">Signed in</small></div></div>
-      <button class="nav-item logout-button" id="logoutBtn"><span>↪</span> Log out</button>
+
+      <div class="drawer-user">
+        <div class="avatar" id="currentAvatar">U</div>
+        <div class="user-meta">
+          <strong id="currentUserName">Your account</strong>
+          <small id="currentUserEmail">Signed in</small>
+        </div>
+      </div>
+
+      <button class="nav-item logout-button" id="logoutBtn">
+        <span>↪</span> Log out
+      </button>
     </aside>
+
     <div class="drawer-overlay" id="drawerOverlay"></div>
+
     <main class="main-area">
+
       <header class="topbar">
-        <button class="icon-button menu-button" id="menuBtn" aria-label="Open navigation" aria-expanded="false">☰</button>
-        <div class="topbar-title"><span class="eyebrow">YOUR SPACE</span><h1 id="pageTitle">User directory</h1></div>
-        <div class="topbar-actions"><div class="top-avatar" id="topAvatar">U</div></div>
+        <button class="icon-button menu-button" id="menuBtn"
+          aria-label="Open navigation" aria-expanded="false">☰</button>
+
+        <div class="topbar-title">
+          <span class="eyebrow">YOUR SPACE</span>
+          <h1 id="pageTitle">User directory</h1>
+        </div>
+
+        <div class="topbar-actions">
+          <div class="top-avatar" id="topAvatar">U</div>
+        </div>
       </header>
 
+      <!-- USER DIRECTORY -->
       <section class="view active" id="directoryView">
-        <div class="welcome-row"><div><h2>Find inspiration in shared notes.</h2><p>Browse accounts and open the notes their owners chose to share.</p></div><div class="pill"><span class="status-dot"></span> Community directory</div></div>
-        <div class="toolbar"><label class="search-box"><span>⌕</span><input id="userSearch" type="search" placeholder="Search people..." autocomplete="off"></label><span class="result-count" id="userCount">Loading accounts…</span></div>
-        <div class="user-grid" id="userGrid"><div class="loading-card">Loading the directory…</div></div>
-        <div class="empty-state hidden" id="directoryEmpty"><div class="empty-icon">⌕</div><h3>No accounts found</h3><p>Try another name or search term.</p></div>
+        <div class="welcome-row">
+          <div>
+            <h2>Find inspiration in shared notes.</h2>
+            <p>Browse accounts and open the notes their owners chose to share.</p>
+          </div>
+          <div class="pill">
+            <span class="status-dot"></span> Community directory
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <label class="search-box">
+            <span>⌕</span>
+            <input id="userSearch" type="search"
+              placeholder="Search people..." autocomplete="off">
+          </label>
+          <span class="result-count" id="userCount">Loading accounts…</span>
+        </div>
+
+        <div class="user-grid" id="userGrid">
+          <div class="loading-card">Loading the directory…</div>
+        </div>
+
+        <div class="empty-state hidden" id="directoryEmpty">
+          <div class="empty-icon">⌕</div>
+          <h3>No accounts found</h3>
+          <p>Try another name or search term.</p>
+        </div>
       </section>
 
+      <!-- MY NOTES -->
       <section class="view" id="myNotesView">
-        <div class="welcome-row"><div><h2>Your notes, your focus.</h2><p>Only you can see your private notes. Turn on sharing for notes you want others to read.</p></div><button class="primary-button" id="addNoteBtn">＋ New note</button></div>
-        <div class="toolbar notes-toolbar"><label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search your notes..." autocomplete="off"></label><select id="filterSelect" aria-label="Filter notes"><option value="all">All categories</option><option value="Work">Work</option><option value="Personal">Personal</option><option value="Ideas">Ideas</option><option value="Reminders">Reminders</option><option value="Study">Study</option></select><span class="result-count" id="notesCount">0 notes</span></div>
+        <div class="welcome-row">
+          <div>
+            <h2>Your notes, your focus.</h2>
+            <p>Only you can see your private notes. Turn on sharing for notes you want others to read.</p>
+          </div>
+          <button class="primary-button" id="addNoteBtn">＋ New note</button>
+        </div>
+
+        <div class="toolbar notes-toolbar">
+          <label class="search-box">
+            <span>⌕</span>
+            <input id="searchInput" type="search"
+              placeholder="Search your notes..." autocomplete="off">
+          </label>
+
+          <select id="filterSelect" aria-label="Filter notes">
+            <option value="all">All categories</option>
+            <option value="Work">Work</option>
+            <option value="Personal">Personal</option>
+            <option value="Ideas">Ideas</option>
+            <option value="Reminders">Reminders</option>
+            <option value="Study">Study</option>
+          </select>
+
+          <span class="result-count" id="notesCount">0 notes</span>
+        </div>
+
         <div class="notes-grid" id="notesContainer"></div>
-        <div class="empty-state hidden" id="notesEmpty"><div class="empty-icon">✎</div><h3>No notes yet</h3><p>Create your first note to get started.</p><button class="primary-button" id="emptyAddBtn">Create a note</button></div>
+
+        <div class="empty-state hidden" id="notesEmpty">
+          <div class="empty-icon">✎</div>
+          <h3>No notes yet</h3>
+          <p>Create your first note to get started.</p>
+          <button class="primary-button" id="emptyAddBtn">Create a note</button>
+        </div>
       </section>
 
+      <!-- SELECTED USER ACCOUNT -->
       <section class="view" id="accountView">
-        <div class="back-row"><button class="text-button" id="backToDirectory">← Back to directory</button><span class="pill">Shared notes only</span></div>
-        <div class="profile-heading"><div class="profile-avatar" id="profileAvatar">U</div><div><h2 id="profileName">Account</h2><p id="profileNoteCount">Shared notes</p></div></div>
-        <div class="toolbar"><label class="search-box"><span>⌕</span><input id="sharedSearch" type="search" placeholder="Search shared notes..." autocomplete="off"></label><select id="sharedFilter" aria-label="Filter shared notes"><option value="all">All categories</option><option value="Work">Work</option><option value="Personal">Personal</option><option value="Ideas">Ideas</option><option value="Reminders">Reminders</option><option value="Study">Study</option></select></div>
+        <div class="back-row">
+          <button class="text-button" id="backToDirectory">← Back to directory</button>
+          <span class="pill">Shared notes only</span>
+        </div>
+
+        <div class="profile-heading">
+          <div class="profile-avatar" id="profileAvatar">U</div>
+          <div>
+            <h2 id="profileName">Account</h2>
+            <p id="profileNoteCount">Shared notes</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <label class="search-box">
+            <span>⌕</span>
+            <input id="sharedSearch" type="search"
+              placeholder="Search shared notes..." autocomplete="off">
+          </label>
+
+          <select id="sharedFilter" aria-label="Filter shared notes">
+            <option value="all">All categories</option>
+            <option value="Work">Work</option>
+            <option value="Personal">Personal</option>
+            <option value="Ideas">Ideas</option>
+            <option value="Reminders">Reminders</option>
+            <option value="Study">Study</option>
+          </select>
+        </div>
+
         <div class="notes-grid" id="sharedNotesContainer"></div>
-        <div class="empty-state hidden" id="sharedEmpty"><div class="empty-icon">▤</div><h3>No shared notes yet</h3><p>This user hasn't shared any notes.</p></div>
+
+        <div class="empty-state hidden" id="sharedEmpty">
+          <div class="empty-icon">▤</div>
+          <h3>No shared notes yet</h3>
+          <p>This user hasn't shared any notes.</p>
+        </div>
       </section>
+
     </main>
   </div>
 
+  <!-- CREATE / EDIT NOTE MODAL -->
   <dialog class="modal" id="noteModal">
     <form id="noteForm" class="modal-card">
-      <div class="modal-heading"><div><span class="eyebrow">YOUR WORKSPACE</span><h2 id="modalTitle">Create a note</h2></div><button class="icon-button" type="button" id="closeModalBtn" aria-label="Close">×</button></div>
-      <label class="field-label" for="noteTitle">Title</label><input id="noteTitle" maxlength="120" required placeholder="Give your note a title">
-      <label class="field-label" for="noteContent">Note</label><textarea id="noteContent" rows="7" required placeholder="Write down your thoughts..."></textarea>
-      <label class="field-label" for="noteTag">Category</label><select id="noteTag"><option>Work</option><option>Personal</option><option>Ideas</option><option>Reminders</option><option>Study</option></select>
-      <label class="share-toggle"><input type="checkbox" id="noteShared"><span><strong>Share this note with signed-in users</strong><small>Only this note becomes visible in the directory. You can turn sharing off anytime.</small></span></label>
+      <div class="modal-heading">
+        <div>
+          <span class="eyebrow">YOUR WORKSPACE</span>
+          <h2 id="modalTitle">Create a note</h2>
+        </div>
+        <button class="icon-button" type="button" id="closeModalBtn"
+          aria-label="Close">×</button>
+      </div>
+
+      <label class="field-label" for="noteTitle">Title</label>
+      <input id="noteTitle" maxlength="120" required
+        placeholder="Give your note a title">
+
+      <label class="field-label" for="noteContent">Note</label>
+      <textarea id="noteContent" rows="7" required
+        placeholder="Write down your thoughts..."></textarea>
+
+      <label class="field-label" for="noteTag">Category</label>
+      <select id="noteTag">
+        <option>Work</option>
+        <option>Personal</option>
+        <option>Ideas</option>
+        <option>Reminders</option>
+        <option>Study</option>
+      </select>
+
+      <label class="share-toggle">
+        <input type="checkbox" id="noteShared">
+        <span>
+          <strong>Share this note with signed-in users</strong>
+          <small>Only this note becomes visible in the directory. You can turn sharing off anytime.</small>
+        </span>
+      </label>
+
       <p class="form-error" id="formError" role="alert"></p>
-      <div class="modal-actions"><button class="secondary-button" type="button" id="cancelModalBtn">Cancel</button><button class="primary-button" id="saveNoteBtn" type="submit">Save note</button></div>
+
+      <div class="modal-actions">
+        <button class="secondary-button" type="button" id="cancelModalBtn">Cancel</button>
+        <button class="primary-button" id="saveNoteBtn" type="submit">Save note</button>
+      </div>
     </form>
   </dialog>
-  <dialog class="modal confirm-modal" id="deleteModal"><div class="modal-card"><div class="modal-heading"><h2>Delete this note?</h2><button class="icon-button" id="closeDeleteBtn" aria-label="Close">×</button></div><p>This action can't be undone.</p><div class="modal-actions"><button class="secondary-button" id="cancelDeleteBtn">Cancel</button><button class="danger-button" id="confirmDeleteBtn">Delete note</button></div></div></dialog>
+
+  <!-- FULL SHARED NOTE VIEWER -->
+  <dialog class="modal" id="sharedNoteModal">
+    <div class="modal-card shared-note-modal">
+      <div class="modal-heading">
+        <div>
+          <span class="eyebrow">SHARED NOTE</span>
+          <h2 id="sharedNoteTitle">Note title</h2>
+        </div>
+        <button class="icon-button" type="button"
+          id="closeSharedNoteBtn" aria-label="Close">×</button>
+      </div>
+
+      <div class="shared-note-info">
+        <span id="sharedNoteAuthor"></span>
+        <span id="sharedNoteCategory"></span>
+        <span id="sharedNoteDate"></span>
+      </div>
+
+      <div class="shared-note-body" id="sharedNoteContent"></div>
+
+      <div class="modal-actions">
+        <button class="secondary-button" type="button"
+          id="closeSharedNoteFooter">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- DELETE CONFIRMATION -->
+  <dialog class="modal confirm-modal" id="deleteModal">
+    <div class="modal-card">
+      <div class="modal-heading">
+        <h2>Delete this note?</h2>
+        <button class="icon-button" id="closeDeleteBtn"
+          aria-label="Close">×</button>
+      </div>
+
+      <p>This action can't be undone.</p>
+
+      <div class="modal-actions">
+        <button class="secondary-button" id="cancelDeleteBtn">Cancel</button>
+        <button class="danger-button" id="confirmDeleteBtn">Delete note</button>
+      </div>
+    </div>
+  </dialog>
+
   <div class="toast" id="toast" role="status"></div>
+
   <script type="module" src="index.js"></script>
 </body>
 </html>
