@@ -3,3 +3,74 @@
 @media(max-width:1200px){.user-grid,.notes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.main-area{padding-left:27px;padding-right:27px}}
 @media(max-width:760px){.drawer{transform:translateX(-105%);box-shadow:none}.drawer.open{transform:translateX(0);box-shadow:15px 0 50px #171c2b20}.drawer-overlay.show{display:block;position:fixed;z-index:30;inset:0;background:#161b2b70;backdrop-filter:blur(2px)}.main-area{margin-left:0;padding:0 18px 35px}.topbar{height:75px;justify-content:flex-start}.menu-button{display:grid!important}.topbar-title{flex:1}.topbar-title h1{font-size:19px}.topbar-actions{margin-left:auto}.welcome-row{align-items:flex-start;flex-direction:column;padding-top:25px;gap:15px}.welcome-row h2{font-size:23px}.welcome-row p{font-size:12px}.welcome-row .primary-button{align-self:stretch}.pill{font-size:10px}.user-grid,.notes-grid{grid-template-columns:1fr}.user-card{padding:15px}.toolbar{flex-wrap:wrap}.search-box{flex-basis:100%;max-width:none}.toolbar select{flex:1}.result-count{margin-left:0}.notes-toolbar .result-count{margin-left:auto}.profile-heading{padding-top:8px}.modal-card{padding:20px}.modal-actions>*{flex:1}.note-card{min-height:180px}}
 @media(min-width:761px) and (max-width:980px){.drawer{width:225px}.main-area{margin-left:225px;padding-left:22px;padding-right:22px}.user-grid,.notes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* =====================================
+   SHARED NOTE FULL VIEW
+===================================== */
+
+.shared-note-card {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shared-note-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 28px #303e7010;
+}
+
+.shared-note-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.shared-view-hint {
+  display: block;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.shared-note-modal {
+  width: 600px;
+  max-width: calc(100% - 28px);
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.shared-note-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 12px 0 20px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.shared-note-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.8;
+  font-size: 13px;
+  color: var(--ink);
+  min-height: 100px;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding: 18px;
+  background: #f7f8fa;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+@media (max-width: 600px) {
+  .shared-note-modal {
+    width: 94vw;
+    max-height: 90vh;
+  }
+
+  .shared-note-body {
+    font-size: 12px;
+    max-height: 60vh;
+    padding: 14px;
+  }
+}
