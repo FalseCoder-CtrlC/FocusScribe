@@ -90,3 +90,18 @@
 .favorite-button:active {
   transform: scale(0.96);
 }
+
+/* PIN BUTTON */
+.pin-button {
+  color: #5266c9;
+  border: 1px solid #dce2ff;
+  background: #f5f6ff;
+}
+
+.pin-button:hover {
+  background: #e9edff;
+}
+
+.pin-button:active {
+  transform: scale(0.96);
+}
