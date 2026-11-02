@@ -1,13 +1,140 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Study Mode — FocusScribe</title><link rel="stylesheet" href="study.css"></head>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8fa">
+  <title>Study Mode — FocusScribe</title>
+  <link rel="stylesheet" href="study.css">
+</head>
+
 <body>
-  <header class="study-top"><a class="brand" href="index.html"><span class="brand-mark">F</span>FocusScribe</a><a class="back-link" href="index.html">← Back to workspace</a></header>
+
+  <header class="study-top">
+    <a class="brand" href="index.html">
+      <span class="brand-mark">F</span>
+      FocusScribe
+    </a>
+
+    <a class="back-link" href="index.html">
+      ← Back to workspace
+    </a>
+  </header>
+
   <main class="study-layout">
-    <section class="study-intro"><span class="eyebrow">DEEP WORK, ONE SESSION AT A TIME</span><h1>Study mode</h1><p>Choose a note, settle in, and focus on one thing at a time.</p></section>
-    <section class="study-panel">
-      <div class="timer-column"><div class="mode-tabs"><button class="mode-tab active" data-minutes="25">Focus</button><button class="mode-tab" data-minutes="5">Short break</button><button class="mode-tab" data-minutes="15">Long break</button></div><div class="timer-ring"><div><span id="timer">25:00</span><small id="timerLabel">READY TO FOCUS</small></div></div><div class="timer-actions"><button class="primary-button" id="startBtn">Start focus</button><button class="secondary-button" id="resetBtn">Reset</button></div><p class="session-hint" id="sessionHint">A focused session is 25 minutes.</p></div>
-      <div class="note-column"><div class="note-column-heading"><div><span class="eyebrow">CURRENT NOTE</span><h2 id="noteTitle">Choose a note</h2></div><span class="note-counter" id="noteCounter">0 / 0</span></div><div class="study-note-content" id="noteContent">Your selected note will appear here.</div><div class="note-nav"><button class="secondary-button" id="prevNote">← Previous</button><button class="secondary-button" id="nextNote">Next →</button></div><div class="note-picker"><label for="noteSelect">Study a different note</label><select id="noteSelect"><option value="">Select a note</option></select></div></div>
+
+    <section class="study-intro">
+      <span class="eyebrow">DEEP WORK, ONE SESSION AT A TIME</span>
+      <h1>Study mode</h1>
+      <p>Choose a note, settle in, and focus on one thing at a time.</p>
     </section>
-  </main><script type="module" src="study.js"></script>
-</body></html>
+
+    <!-- POMODORO TIMER -->
+    <section class="study-panel">
+
+      <div class="timer-column">
+
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-minutes="25">
+            Focus
+          </button>
+
+          <button class="mode-tab" data-minutes="5">
+            Short break
+          </button>
+
+          <button class="mode-tab" data-minutes="15">
+            Long break
+          </button>
+        </div>
+
+        <div class="timer-ring">
+          <div>
+            <span id="timer">25:00</span>
+            <small id="timerLabel">READY TO FOCUS</small>
+          </div>
+        </div>
+
+        <div class="timer-actions">
+          <button class="primary-button" id="startBtn">
+            Start focus
+          </button>
+
+          <button class="secondary-button" id="resetBtn">
+            Reset
+          </button>
+        </div>
+
+        <p class="session-hint" id="sessionHint">
+          A focused session is 25 minutes.
+        </p>
+
+      </div>
+
+      <!-- CURRENT NOTE -->
+      <div class="note-column">
+
+        <div class="note-column-heading">
+          <div>
+            <span class="eyebrow">CURRENT NOTE</span>
+            <h2 id="noteTitle">Choose a note</h2>
+          </div>
+
+          <span class="note-counter" id="noteCounter">0 / 0</span>
+        </div>
+
+        <div class="study-note-content" id="noteContent">
+          Your selected note will appear here.
+        </div>
+
+        <div class="note-nav">
+          <button class="secondary-button" id="prevNote">
+            ← Previous
+          </button>
+
+          <button class="secondary-button" id="nextNote">
+            Next →
+          </button>
+        </div>
+
+        <div class="note-picker">
+          <label for="noteSelect">Study a different note</label>
+
+          <select id="noteSelect">
+            <option value="">Select a note</option>
+          </select>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- STUDY SESSION HISTORY -->
+    <section class="history-panel">
+
+      <div class="history-heading">
+        <div>
+          <span class="eyebrow">YOUR PROGRESS</span>
+          <h2>Study Session History</h2>
+          <p>Your recently completed focus sessions.</p>
+        </div>
+
+        <span class="history-count" id="historyCount">
+          0 sessions
+        </span>
+      </div>
+
+      <div class="history-list" id="historyContainer">
+        <p class="history-empty">
+          Your completed study sessions will appear here.
+        </p>
+      </div>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="study.js"></script>
+
+</body>
+</html>
