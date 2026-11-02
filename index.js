@@ -270,17 +270,22 @@ document.addEventListener("DOMContentLoaded", () => {
       ...d.data()
     }));
 
-    myNotes.sort((a, b) =>
-      timestamp(b.updatedAt || b.createdAt) -
-      timestamp(a.updatedAt || a.createdAt)
-    );
+    myNotes.sort((a, b) => {
+  // Pinned notes always appear first
+  if (a.isPinned !== b.isPinned) {
+    return Number(b.isPinned) - Number(a.isPinned);
+  }
+
+  // Sort by latest update
+  return timestamp(b.updatedAt || b.createdAt) -
+         timestamp(a.updatedAt || a.createdAt);
+});
 
     cacheMyNotes();
 
     renderMyNotes();
 
   }
-
 
   // NOTE CARD
 
@@ -289,12 +294,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const sharing = note.isShared
       ? '<span class="shared-label">Shared</span>'
       : "";
-
-    const actions = ownerMode ? `
+    
+const actions = ownerMode ? `
   <button class="mini-button favorite-button"
     data-action="favorite"
     data-id="${escapeHtml(note.id)}">
     ${note.isFavorite ? "★ Favorited" : "☆ Favorite"}
+  </button>
+
+  <button class="mini-button pin-button"
+    data-action="pin"
+    data-id="${escapeHtml(note.id)}">
+    ${note.isPinned ? "📌 Pinned" : "📍 Pin"}
   </button>
 
   <button class="mini-button"
@@ -352,7 +363,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   }
 
-
   // RENDER MY NOTES
 
   function renderMyNotes() {
@@ -398,7 +408,6 @@ document.addEventListener("DOMContentLoaded", () => {
   $("searchInput").addEventListener("input", renderMyNotes);
 
   $("filterSelect").addEventListener("change", renderMyNotes);
-
 
   // CREATE / EDIT MODAL
 
@@ -533,6 +542,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 
+ 
   // MY NOTE ACTIONS
 
   notesContainer.addEventListener("click", async e => {
@@ -544,65 +554,93 @@ document.addEventListener("DOMContentLoaded", () => {
     const note = myNotes.find(n => n.id === button.dataset.id);
 
     if (!note) return;
+
+    // FAVORITE NOTE
     if (button.dataset.action === "favorite") {
+      try {
+        const newFavoriteStatus = !note.isFavorite;
 
-  try {
+        await updateDoc(
+          doc(notesRef(currentUser.uid), note.id),
+          {
+            isFavorite: newFavoriteStatus
+          }
+        );
 
-    const newFavoriteStatus = !note.isFavorite;
+        note.isFavorite = newFavoriteStatus;
 
-    await updateDoc(
-      doc(notesRef(currentUser.uid), note.id),
-      {
-        isFavorite: newFavoriteStatus
+        cacheMyNotes();
+        renderMyNotes();
+
+        toast(
+          newFavoriteStatus
+            ? "Added to favorites."
+            : "Removed from favorites."
+        );
+
+      } catch (err) {
+        console.error(err);
+        toast("Couldn't update favorite status.");
       }
-    );
 
-    note.isFavorite = newFavoriteStatus;
-
-    cacheMyNotes();
-    renderMyNotes();
-
-    toast(
-      newFavoriteStatus
-        ? "Added to favorites."
-        : "Removed from favorites."
-    );
-
-  } catch (err) {
-
-    console.error(err);
-    toast("Couldn't update favorite status.");
-
-  }
-
-  return;
-}
-    if (button.dataset.action === "edit") {
-
-      openNoteModal(note);
-
+      return;
     }
 
-    if (button.dataset.action === "study") {
+    // PIN NOTE
+    if (button.dataset.action === "pin") {
+      try {
+        const newPinStatus = !note.isPinned;
 
+        await updateDoc(
+          doc(notesRef(currentUser.uid), note.id),
+          {
+            isPinned: newPinStatus
+          }
+        );
+
+        note.isPinned = newPinStatus;
+
+        cacheMyNotes();
+        renderMyNotes();
+
+        toast(
+          newPinStatus
+            ? "Note pinned."
+            : "Note unpinned."
+        );
+
+      } catch (err) {
+        console.error(err);
+        toast("Couldn't update pin status.");
+      }
+
+      return;
+    }
+
+    // EDIT NOTE
+    if (button.dataset.action === "edit") {
+      openNoteModal(note);
+      return;
+    }
+
+    // STUDY NOTE
+    if (button.dataset.action === "study") {
       cacheMyNotes();
 
       localStorage.setItem("selectedStudyNoteId", note.id);
 
       window.location.href = "study.html";
-
+      return;
     }
 
+    // DELETE NOTE
     if (button.dataset.action === "delete") {
-
       deletingId = note.id;
-
       deleteModal.showModal();
-
+      return;
     }
 
   });
-
 
   // DELETE NOTE
 
