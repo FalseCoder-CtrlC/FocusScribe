@@ -2,7 +2,8 @@ import { auth, db } from "./firebase.js";
 
 import {
   onAuthStateChanged,
-  signOut
+  signOut,
+  updateProfile
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
 
 import {
@@ -35,7 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const userGrid = $("userGrid");
   const notesContainer = $("notesContainer");
   const sharedNotesContainer = $("sharedNotesContainer");
-
+  const profileModal = $("profileModal");
+  
   const noteModal = $("noteModal");
   const deleteModal = $("deleteModal");
   const sharedNoteModal = $("sharedNoteModal");
@@ -239,7 +241,100 @@ document.addEventListener("DOMContentLoaded", () => {
 
   }
 
+// EDIT PROFILE
 
+$("editProfileBtn").addEventListener("click", () => {
+  if (!currentUser) return;
+
+  $("profileNameInput").value =
+    $("currentUserName").textContent || "";
+
+  $("profileFormError").textContent = "";
+
+  profileModal.showModal();
+  $("profileNameInput").focus();
+});
+
+$("closeProfileBtn").addEventListener("click", () => {
+  profileModal.close();
+});
+
+$("cancelProfileBtn").addEventListener("click", () => {
+  profileModal.close();
+});
+
+$("profileForm").addEventListener("submit", async e => {
+  e.preventDefault();
+
+  if (!currentUser) return;
+
+  const input = $("profileNameInput");
+  const button = $("saveProfileBtn");
+  const displayName = input.value.trim();
+
+  $("profileFormError").textContent = "";
+
+  if (!displayName) {
+    $("profileFormError").textContent =
+      "Please enter your display name.";
+    input.focus();
+    return;
+  }
+
+  if (displayName.length > 40) {
+    $("profileFormError").textContent =
+      "Your display name must be 40 characters or fewer.";
+    input.focus();
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Saving…";
+
+  try {
+    // Update the Firestore profile.
+    await setDoc(userProfileRef(currentUser.uid), {
+      displayName: displayName,
+      updatedAt: serverTimestamp()
+    }, {
+      merge: true
+    });
+
+    // Update the Firebase Authentication profile.
+    await updateProfile(currentUser, {
+      displayName: displayName
+    });
+
+    // Refresh the current profile display.
+    await ensureProfile(currentUser);
+
+    // Refresh the User Directory.
+    await loadDirectory();
+
+    // Refresh selected account if it is the current user.
+    if (selectedAccount?.uid === currentUser.uid) {
+      selectedAccount.displayName = displayName;
+
+      $("profileName").textContent = displayName;
+      $("profileAvatar").textContent = initials(displayName);
+    }
+
+    profileModal.close();
+
+    toast("Profile updated successfully.");
+
+  } catch (err) {
+    console.error(err);
+
+    $("profileFormError").textContent =
+      "Couldn't update your profile. Please try again.";
+
+  } finally {
+    button.disabled = false;
+    button.textContent = "Save changes";
+  }
+});
+  
   // MY NOTES CACHE
 
   function cacheMyNotes() {
