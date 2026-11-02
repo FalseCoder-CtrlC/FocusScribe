@@ -59,10 +59,13 @@
         </div>
 
         <div class="topbar-actions">
-          <div class="top-avatar" id="topAvatar">U</div>
+  <button class="secondary-button" id="editProfileBtn" type="button">
+    Edit profile
+  </button>
+  <div class="top-avatar" id="topAvatar">U</div>
         </div>
       </header>
-
+      
       <!-- USER DIRECTORY -->
       <section class="view active" id="directoryView">
         <div class="welcome-row">
@@ -252,6 +255,42 @@
     </div>
   </dialog>
 
+<!-- EDIT PROFILE MODAL -->
+<dialog class="modal" id="profileModal">
+  <form id="profileForm" class="modal-card">
+    <div class="modal-heading">
+      <div>
+        <span class="eyebrow">ACCOUNT SETTINGS</span>
+        <h2>Edit profile</h2>
+      </div>
+      <button class="icon-button" type="button"
+        id="closeProfileBtn" aria-label="Close">×</button>
+    </div>
+
+    <label class="field-label" for="profileNameInput">
+      Display name
+    </label>
+
+    <input
+      id="profileNameInput"
+      type="text"
+      maxlength="40"
+      required
+      placeholder="Enter your display name"
+    >
+
+    <p class="form-error" id="profileFormError" role="alert"></p>
+
+    <div class="modal-actions">
+      <button class="secondary-button" type="button"
+        id="cancelProfileBtn">Cancel</button>
+
+      <button class="primary-button" id="saveProfileBtn"
+        type="submit">Save changes</button>
+    </div>
+  </form>
+</dialog>
+  
   <!-- DELETE CONFIRMATION -->
   <dialog class="modal confirm-modal" id="deleteModal">
     <div class="modal-card">
