@@ -109,6 +109,43 @@
 
     </section>
 
+    <!-- STUDY CHECKLIST -->
+    <section class="checklist-panel">
+
+      <div class="checklist-heading">
+        <div>
+          <span class="eyebrow">STAY ORGANIZED</span>
+          <h2>Study Checklist</h2>
+          <p>Keep track of the tasks you want to finish.</p>
+        </div>
+
+        <span class="checklist-count" id="taskCount">
+          0 tasks
+        </span>
+      </div>
+
+      <form id="taskForm" class="checklist-form">
+        <input
+          type="text"
+          id="taskInput"
+          maxlength="120"
+          placeholder="Add a study task..."
+          required
+        >
+
+        <button type="submit" class="primary-button" id="addTaskBtn">
+          + Add task
+        </button>
+      </form>
+
+      <p class="checklist-error" id="taskError" role="alert"></p>
+
+      <div class="checklist-list" id="taskList">
+        <p class="checklist-empty">Loading your study tasks...</p>
+      </div>
+
+    </section>
+
     <!-- STUDY SESSION HISTORY -->
     <section class="history-panel">
 
