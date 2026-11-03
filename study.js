@@ -8,6 +8,9 @@ import {
   collection,
   getDocs,
   addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
   query,
   orderBy,
   limit,
@@ -18,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const $ = id => document.getElementById(id);
 
   let notes = [];
+  let tasks = [];
   let selectedIndex = 0;
   let duration = 25 * 60;
   let remaining = duration;
@@ -26,8 +30,14 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentMode = "Focus";
   let currentUser = null;
 
-  const cacheKey = () =>
-    "focusScribeNotes_" + (auth.currentUser?.uid || "");
+  const notesRef = () =>
+    collection(db, "users", currentUser.uid, "notes");
+
+  const tasksRef = () =>
+    collection(db, "users", currentUser.uid, "studyTasks");
+
+  const sessionsRef = () =>
+    collection(db, "users", currentUser.uid, "studySessions");
 
   function escapeHtml(value = "") {
     return String(value).replace(/[&<>"']/g, char => ({
@@ -58,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.title = `${format(remaining)} — Study Mode`;
   }
 
+  // DISPLAY SELECTED NOTE
   function renderNote() {
     if (!notes.length) {
       $("noteTitle").textContent = "No notes available";
@@ -99,6 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderNote();
   }
 
+  // TIMER MODES
   function setMode(minutes, label) {
     stopTimer();
 
@@ -133,15 +145,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedNote = notes[selectedIndex] || null;
 
     try {
-      await addDoc(
-        collection(db, "users", currentUser.uid, "studySessions"),
-        {
-          noteId: selectedNote?.id || null,
-          noteTitle: selectedNote?.title || "No note selected",
-          durationMinutes: 25,
-          completedAt: serverTimestamp()
-        }
-      );
+      await addDoc(sessionsRef(), {
+        noteId: selectedNote?.id || null,
+        noteTitle: selectedNote?.title || "No note selected",
+        durationMinutes: 25,
+        completedAt: serverTimestamp()
+      });
 
       await loadStudyHistory();
 
@@ -156,6 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // START OR PAUSE TIMER
   function startTimer() {
     if (running) {
       stopTimer();
@@ -186,9 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         $("startBtn").textContent = "Start again";
 
-        if (
-          currentMode === "Focus"
-        ) {
+        if (currentMode === "Focus") {
           saveStudySession();
         }
 
@@ -204,7 +212,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 1000);
   }
 
-  // STUDY HISTORY
+  // LOAD STUDY HISTORY
   async function loadStudyHistory() {
     if (!currentUser) return;
 
@@ -215,7 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const historyQuery = query(
-        collection(db, "users", currentUser.uid, "studySessions"),
+        sessionsRef(),
         orderBy("completedAt", "desc"),
         limit(10)
       );
@@ -243,10 +251,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return `
           <article class="history-item">
             <div class="history-icon">✓</div>
+
             <div class="history-details">
               <strong>${escapeHtml(session.noteTitle || "No note selected")}</strong>
               <small>${escapeHtml(date)}</small>
             </div>
+
             <span class="history-duration">
               ${Number(session.durationMinutes) || 25} min
             </span>
@@ -264,6 +274,181 @@ document.addEventListener("DOMContentLoaded", () => {
         '<p class="history-empty">Unable to load study history. Check your Firestore rules.</p>';
     }
   }
+
+  // =========================
+  // STUDY CHECKLIST
+  // =========================
+
+  // LOAD TASKS
+  async function loadTasks() {
+    if (!currentUser) return;
+
+    $("taskList").innerHTML =
+      '<p class="checklist-empty">Loading your study tasks...</p>';
+
+    try {
+      const snapshot = await getDocs(tasksRef());
+
+      tasks = snapshot.docs.map(document => ({
+        id: document.id,
+        ...document.data()
+      }));
+
+      // Incomplete tasks appear before completed tasks.
+      tasks.sort((a, b) => {
+        if (Boolean(a.completed) !== Boolean(b.completed)) {
+          return Number(Boolean(a.completed)) -
+                 Number(Boolean(b.completed));
+        }
+
+        return (a.createdAt?.toMillis?.() || 0) -
+               (b.createdAt?.toMillis?.() || 0);
+      });
+
+      renderTasks();
+
+    } catch (error) {
+      console.error("Could not load study tasks:", error);
+
+      $("taskList").innerHTML =
+        '<p class="checklist-empty">Unable to load tasks. Check your Firestore rules.</p>';
+    }
+  }
+
+  // DISPLAY TASKS
+  function renderTasks() {
+    const completedCount = tasks.filter(task => task.completed).length;
+
+    $("taskCount").textContent =
+      `${completedCount}/${tasks.length} completed`;
+
+    if (!tasks.length) {
+      $("taskList").innerHTML =
+        '<p class="checklist-empty">No study tasks yet. Add your first task above!</p>';
+
+      return;
+    }
+
+    $("taskList").innerHTML = tasks.map(task => `
+      <div class="checklist-item ${task.completed ? "completed" : ""}"
+           data-task-id="${escapeHtml(task.id)}">
+
+        <label class="checklist-task">
+          <input
+            type="checkbox"
+            class="task-checkbox"
+            data-action="complete"
+            ${task.completed ? "checked" : ""}
+          >
+
+          <span class="task-text">
+            ${escapeHtml(task.text || "Untitled task")}
+          </span>
+        </label>
+
+        <button
+          type="button"
+          class="task-delete"
+          data-action="delete"
+          aria-label="Delete task"
+          title="Delete task">
+          ×
+        </button>
+
+      </div>
+    `).join("");
+  }
+
+  // ADD TASK
+  $("taskForm").addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (!currentUser) return;
+
+    const input = $("taskInput");
+    const button = $("addTaskBtn");
+    const text = input.value.trim();
+
+    $("taskError").textContent = "";
+
+    if (!text) {
+      $("taskError").textContent = "Please enter a study task.";
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Adding...";
+
+    try {
+      await addDoc(tasksRef(), {
+        text,
+        completed: false,
+        createdAt: serverTimestamp()
+      });
+
+      input.value = "";
+
+      await loadTasks();
+
+    } catch (error) {
+      console.error("Could not add task:", error);
+
+      $("taskError").textContent =
+        "Couldn't add your task. Check your Firestore rules.";
+    } finally {
+      button.disabled = false;
+      button.textContent = "+ Add task";
+    }
+  });
+
+  // COMPLETE OR DELETE TASK
+  $("taskList").addEventListener("click", async event => {
+    const actionElement = event.target.closest("[data-action]");
+
+    if (!actionElement || !currentUser) return;
+
+    const taskElement = actionElement.closest("[data-task-id]");
+    if (!taskElement) return;
+
+    const taskId = taskElement.dataset.taskId;
+    const task = tasks.find(item => item.id === taskId);
+
+    if (!task) return;
+
+    const action = actionElement.dataset.action;
+
+    try {
+      if (action === "complete") {
+        await updateDoc(doc(tasksRef(), taskId), {
+          completed: actionElement.checked
+        });
+
+        task.completed = actionElement.checked;
+        renderTasks();
+      }
+
+      if (action === "delete") {
+        const confirmed = window.confirm(
+          "Are you sure you want to delete this study task?"
+        );
+
+        if (!confirmed) return;
+
+        await deleteDoc(doc(tasksRef(), taskId));
+
+        tasks = tasks.filter(item => item.id !== taskId);
+        renderTasks();
+      }
+
+    } catch (error) {
+      console.error("Could not update task:", error);
+
+      $("taskError").textContent =
+        "Couldn't update the task. Please try again.";
+
+      await loadTasks();
+    }
+  });
 
   // TIMER BUTTONS
   $("startBtn").addEventListener("click", startTimer);
@@ -310,9 +495,8 @@ document.addEventListener("DOMContentLoaded", () => {
     currentUser = user;
 
     try {
-      const snapshot = await getDocs(
-        collection(db, "users", user.uid, "notes")
-      );
+      // LOAD USER NOTES
+      const snapshot = await getDocs(notesRef());
 
       notes = snapshot.docs.map(document => ({
         id: document.id,
@@ -329,7 +513,11 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       localStorage.setItem("focusScribeCurrentUserId", user.uid);
-      localStorage.setItem(cacheKey(), JSON.stringify(notes));
+
+      localStorage.setItem(
+        "focusScribeNotes_" + user.uid,
+        JSON.stringify(notes)
+      );
 
       $("noteSelect").innerHTML = notes.map(note => `
         <option value="${escapeHtml(note.id)}">
@@ -346,7 +534,9 @@ document.addEventListener("DOMContentLoaded", () => {
       renderNote();
       renderTimer();
 
+      // LOAD HISTORY AND CHECKLIST
       await loadStudyHistory();
+      await loadTasks();
 
     } catch (error) {
       console.error(error);
